@@ -148,7 +148,7 @@ async def queryGraphistry(node1: str, keyword1: Optional[str] = "null", node2: O
                 'Moderator': 'MV', 'IndependentVariable': 'IV', 'Mediator': 'M', 'DependentVariable': 'DV'}, default_mapping="?").addStyle(bg={'color': '#FFFFFF'}).plot(render=False)
             query = urlsplit(shareable_and_embeddable_url).query
             params = parse_qs(query)
-            dataset_value = params.get('dataset', {})
+            dataset_value = params['dataset']
             await insert_query_history(user_id=userId, node1=node1, keyword1=keyword1, node2=node2, keyword2=keyword2, node3=node3, keyword3=keyword3, dataset=dataset_value)
 
         elif node2 != "null" and node3 == "null":
@@ -196,7 +196,8 @@ async def queryGraphistry(node1: str, keyword1: Optional[str] = "null", node2: O
                 nodes).edges(edges_r).addStyle(bg={'color': '#FFFFFF'}).plot(render=False)
             query = urlsplit(shareable_and_embeddable_url).query
             params = parse_qs(query)
-            dataset_value = params.get('dataset', {})
+            dataset_value = params['dataset']
+            print(dataset_value)
             await insert_query_history(user_id=userId, node1=node1, keyword1=keyword1, node2=node2, keyword2=keyword2, dataset=dataset_value)
 
         elif node2 == "null" and node3 == "null":
@@ -233,7 +234,7 @@ async def queryGraphistry(node1: str, keyword1: Optional[str] = "null", node2: O
                 shareable_and_embeddable_url = viz.plot(render=False)
                 query = urlsplit(shareable_and_embeddable_url).query
                 params = parse_qs(query)
-                dataset_value = params.get('dataset', {})
+                dataset_value = params['dataset']
                 await insert_query_history(user_id=userId, node1=node1, keyword1=keyword1, dataset=dataset_value)
             else:
                 msg = "No records found"
@@ -322,7 +323,7 @@ async def get_allQueries():
     return json_results
 
 
-async def insert_query_history(user_id: str, node1: str, keyword1: Optional[str] = None, node2: Optional[str] = None, keyword2: Optional[str] = None, node3: Optional[str] = None, keyword3: Optional[str] = None, dataset: Optional[str] = None, status: Optional[str] = None, error_message: Optional[str] = None) -> None:
+async def insert_query_history(user_id: Optional[str] , node1: str, keyword1: Optional[str] = None, node2: Optional[str] = None, keyword2: Optional[str] = None, node3: Optional[str] = None, keyword3: Optional[str] = None, dataset: Optional[str] = None, status: Optional[str] = None, error_message: Optional[str] = None) -> None:
     with SessionLocal() as con:
         query = text("""
             INSERT INTO ld_user_build_query_log (user_id, node1, keyword1, node2, keyword2, node3, keyword3, dataset, status, error_message)   
