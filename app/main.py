@@ -126,14 +126,14 @@ async def queryGraphistry(node1: str, keyword1: Optional[str] = "null", node2: O
             print(cypher_query_edges)
             with driver.session() as session:
                 result = session.run(cypher_query_node1)
-                node1 = pd.DataFrame([r.data() for r in result])
+                node1_df = pd.DataFrame([r.data() for r in result])
             with driver.session() as session:
                 result = session.run(cypher_query_node2)
-                node2 = pd.DataFrame([r.data() for r in result])
+                node2_df = pd.DataFrame([r.data() for r in result])
             with driver.session() as session:
                 result = session.run(cypher_query_node3)
-                node3 = pd.DataFrame([r.data() for r in result])
-            nodes = pd.concat([node1, node2, node3])
+                node3_df = pd.DataFrame([r.data() for r in result])
+            nodes = pd.concat([node1_df, node2_df, node3_df])
             with driver.session() as session:
                 result = session.run(cypher_query_edges)
                 edges_r = pd.DataFrame([r.data() for r in result])
@@ -179,11 +179,11 @@ async def queryGraphistry(node1: str, keyword1: Optional[str] = "null", node2: O
             print(cypher_query_edges)
             with driver.session() as session:
                 result = session.run(cypher_query_node1)
-                node1 = pd.DataFrame([r.data() for r in result])
+                node1_df = pd.DataFrame([r.data() for r in result])
             with driver.session() as session:
                 result = session.run(cypher_query_node2)
-                node2 = pd.DataFrame([r.data() for r in result])
-            nodes = pd.concat([node1, node2])
+                node2_df = pd.DataFrame([r.data() for r in result])
+            nodes = pd.concat([node1_df, node2_df])
             with driver.session() as session:
                 result = session.run(cypher_query_edges)
                 edges_r = pd.DataFrame([r.data() for r in result])
@@ -197,8 +197,8 @@ async def queryGraphistry(node1: str, keyword1: Optional[str] = "null", node2: O
             query = urlsplit(shareable_and_embeddable_url).query
             params = parse_qs(query)
             dataset_value = params['dataset']
-            print(dataset_value)
             await insert_query_history(user_id=userId, node1=node1, keyword1=keyword1, node2=node2, keyword2=keyword2, dataset=dataset_value)
+
 
         elif node2 == "null" and node3 == "null":
             print("Found 1 node")
@@ -324,23 +324,24 @@ async def get_allQueries():
 
 
 async def insert_query_history(user_id: Optional[str] , node1: str, keyword1: Optional[str] = None, node2: Optional[str] = None, keyword2: Optional[str] = None, node3: Optional[str] = None, keyword3: Optional[str] = None, dataset: Optional[str] = None, status: Optional[str] = None, error_message: Optional[str] = None) -> None:
-    with SessionLocal() as con:
+    with engine.connect() as con:
         query = text("""
             INSERT INTO ld_user_build_query_log (user_id, node1, keyword1, node2, keyword2, node3, keyword3, dataset, status, error_message)   
             VALUES (:user_id, :node1, :keyword1, :node2, :keyword2, :node3, :keyword3, :dataset, :status, :error_message)
         """)
-        params = {
-            "user_id": user_id,
-            "node1": node1,
-            "keyword1": keyword1,
-            "node2": node2,
-            "keyword2": keyword2,
-            "node3": node3,
-            "keyword3": keyword3,
-            "dataset": dataset,
-            "status": status,
-            "error_message": error_message}
-        con.execute(query, params)
+        con.execute(
+             query,
+             user_id=user_id,
+             node1=node1,
+             keyword1=keyword1,
+             node2=node2,
+             keyword2=keyword2,
+             node3=node3,
+             keyword3=keyword3,
+             dataset=dataset,
+             status=status,
+             error_message=error_message
+         )
 
 
 class SaveQuery(BaseModel):
