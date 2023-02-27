@@ -144,7 +144,7 @@ async def queryGraphistry(node1: str, keyword1: Optional[str] = "null", node2: O
                 return (msg)
             var_bind = f"{query_builder_data_node[0]['ld_edge_point_icon']}"
 
-            shareable_and_embeddable_url = graphistry.bind(source="n1", destination="n2", node="id").nodes(nodes).edges(edges_r).encode_point_icon('ConstructRole', shape="circle", as_text=True, categorical_mapping={
+            shareable_and_embeddable_url = graphistry.bind(source="n1", destination="n2", node="id").nodes(nodes).edges(edges_r).encode_point_icon('constructRole', shape="circle", as_text=True, categorical_mapping={
                 'Moderator': 'MV', 'IndependentVariable': 'IV', 'Mediator': 'M', 'DependentVariable': 'DV'}, default_mapping="?").addStyle(bg={'color': '#FFFFFF'}).plot(render=False)
             query = urlsplit(shareable_and_embeddable_url).query
             params = parse_qs(query)
