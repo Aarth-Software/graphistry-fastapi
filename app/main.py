@@ -397,17 +397,22 @@ def save_query(save_query: SaveQuery):
         }
         con.execute(query, params)
         return {'message': 'Query saved successfully'}
-
+    
+class UpdateQuery(BaseModel):
+    uuid: str 
+    query_name: Optional[str] = None
 @app.post('/updateSavedQuery')
-def update_saved_query(uuid: str, query_name: Optional[str] = None):
+def update_saved_query(UpdateQuery: UpdateQuery):
     with SessionLocal() as con:
-        if not uuid:
+        if not UpdateQuery.uuid:
             return {'message': 'Please provide a uuid to update'}
         query = text("""
             UPDATE ld_user_saved_queries
             SET query_name = :query_name
             WHERE uuid = :uuid
         """)
+        uuid=UpdateQuery.uuid
+        query_name=UpdateQuery.query_name
         params = {"uuid": uuid, "query_name": query_name}
         result = con.execute(query, params)
         if result.rowcount == 0:
