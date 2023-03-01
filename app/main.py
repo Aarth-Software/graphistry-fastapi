@@ -154,14 +154,14 @@ async def queryGraphistry(node1: str, keyword1: Optional[str] = "null", node2: O
                 msg = "No records found"
                 await insert_query_history(user_id=userId, node1=node1, keyword1=keyword1, node2=node2, keyword2=keyword2, node3=node3, keyword3=keyword3, error_message=msg)
                 return (msg)
-            var_bind = f"{query_builder_data_node[0]['ld_edge_point_icon']}"
-            g = graphistry.edges(edges_r, source='n1', destination='n2')
-            g = g.nodes(nodes_df, 'id')
-            g = g.layout_igraph(layout='sugiyama')
-            shareable_and_embeddable_url = g.plot(render=False)
+            # var_bind = f"{query_builder_data_node[0]['ld_edge_point_icon']}"
+            # g = graphistry.edges(edges_r, source='n1', destination='n2')
+            # g = g.nodes(nodes_df, 'id')
+            # g = g.layout_igraph(layout='sugiyama')
+            # shareable_and_embeddable_url = g.plot(render=False)
  
-            # shareable_and_embeddable_url = graphistry.bind(source="n1", destination="n2", node="id").nodes(nodes_df).edges(edges_r).encode_point_icon('constructRole', shape="circle", as_text=True, categorical_mapping={
-            #     'Moderator': 'MV', 'IndependentVariable': 'IV', 'Mediator': 'M', 'DependentVariable': 'DV'}, default_mapping="").addStyle(bg={'color': '#FFFFFF'}).plot(render=False)
+            shareable_and_embeddable_url = graphistry.bind(source="n1", destination="n2", node="id").nodes(nodes_df).edges(edges_r).encode_point_icon('constructRole', shape="circle", as_text=True, categorical_mapping={
+                'Moderator': 'MV', 'IndependentVariable': 'IV', 'Mediator': 'M', 'DependentVariable': 'DV'}, default_mapping="").addStyle(bg={'color': '#FFFFFF'}).plot(render=False)
             query = urlsplit(shareable_and_embeddable_url).query
             params = parse_qs(query)
             dataset_value = params['dataset']
