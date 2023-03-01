@@ -414,16 +414,20 @@ def update_saved_query(uuid: str, query_name: Optional[str] = None):
             return {'message': f"No saved query found with uuid '{uuid}'"}
         else:
             return {'message': f"Query with uuid '{uuid}' updated successfully"}
+class DeleteQuery(BaseModel):
+    uuid:str
 
 @app.post('/deleteSavedQuery')
-def delete_saved_query(uuid: str):
+def delete_saved_query(DeleteQuery :DeleteQuery):
     with SessionLocal() as con:
-        if not uuid:
+        print (DeleteQuery)
+        if not DeleteQuery.uuid:
             return {'message': 'Please provide a uuid to delete'}
         query = text("""
             DELETE FROM ld_user_saved_queries
             WHERE uuid = :uuid
         """)
+        uuid=DeleteQuery.uuid
         params = {"uuid": uuid}
         result = con.execute(query, params)
         if result.rowcount == 0:
