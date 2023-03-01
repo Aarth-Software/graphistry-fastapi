@@ -3,7 +3,6 @@ import logging
 import os
 from pydantic import BaseModel
 from urllib.parse import parse_qs, urlsplit
-from typing import Optional
 import graphistry
 import pandas as pd
 from dotenv import load_dotenv
@@ -13,7 +12,15 @@ from neo4j import GraphDatabase  # for data loader
 from neo4j.exceptions import ServiceUnavailable
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-
+from typing import Any, Dict, List, Optional, Union
+from graphistry.constants import NODE
+from graphistry.Engine import Engine
+from graphistry.Plottable import Plottable
+from graphistry.plugins_types import CuGraphKind
+from graphistry.util import setup_logger
+from graphistry.plugins import igraph
+from graphistry.plugins.igraph import layout_igraph
+from graphistry.plugins import cugraph
 load_dotenv()
 uri = os.getenv("uri")
 user = os.getenv("user")
@@ -133,19 +140,28 @@ async def queryGraphistry(node1: str, keyword1: Optional[str] = "null", node2: O
             with driver.session() as session:
                 result = session.run(cypher_query_node3)
                 node3_df = pd.DataFrame([r.data() for r in result])
-            nodes = pd.concat([node1_df, node2_df, node3_df])
+            nodes_df = pd.concat([node1_df, node2_df, node3_df])
+            # node_props = pd.concat([node1_df, node2_df, node3_df]).to_dict('records')
+            # node_props = [{'id': x['id'], 'properties': x} for x in node_props]
+            # nodes_df = pd.DataFrame(node_props)
+            print(nodes_df)
+
             with driver.session() as session:
                 result = session.run(cypher_query_edges)
                 edges_r = pd.DataFrame([r.data() for r in result])
-
-            if nodes.empty:
+                print(edges_r)
+            if nodes_df.empty:
                 msg = "No records found"
                 await insert_query_history(user_id=userId, node1=node1, keyword1=keyword1, node2=node2, keyword2=keyword2, node3=node3, keyword3=keyword3, error_message=msg)
                 return (msg)
             var_bind = f"{query_builder_data_node[0]['ld_edge_point_icon']}"
-
-            shareable_and_embeddable_url = graphistry.bind(source="n1", destination="n2", node="id").nodes(nodes).edges(edges_r).encode_point_icon('constructRole', shape="circle", as_text=True, categorical_mapping={
-                'Moderator': 'MV', 'IndependentVariable': 'IV', 'Mediator': 'M', 'DependentVariable': 'DV'}, default_mapping="?").addStyle(bg={'color': '#FFFFFF'}).plot(render=False)
+            g = graphistry.edges(edges_r, source='n1', destination='n2')
+            g = g.nodes(nodes_df, 'id')
+            g = g.layout_igraph(layout='sugiyama')
+            shareable_and_embeddable_url = g.plot(render=False)
+ 
+            # shareable_and_embeddable_url = graphistry.bind(source="n1", destination="n2", node="id").nodes(nodes_df).edges(edges_r).encode_point_icon('constructRole', shape="circle", as_text=True, categorical_mapping={
+            #     'Moderator': 'MV', 'IndependentVariable': 'IV', 'Mediator': 'M', 'DependentVariable': 'DV'}, default_mapping="").addStyle(bg={'color': '#FFFFFF'}).plot(render=False)
             query = urlsplit(shareable_and_embeddable_url).query
             params = parse_qs(query)
             dataset_value = params['dataset']
@@ -191,9 +207,11 @@ async def queryGraphistry(node1: str, keyword1: Optional[str] = "null", node2: O
                 msg = "No records found"
                 await insert_query_history(user_id=userId, node1=node1, keyword1=keyword1, node2=node2, keyword2=keyword2, error_message=msg)
                 return (msg)
-            var_bind = f"{query_builder_data_node[0]['ld_edge_point_icon']}"
+
             shareable_and_embeddable_url = graphistry.bind(source="n1", destination="n2", node="id").nodes(
-                nodes).edges(edges_r).addStyle(bg={'color': '#FFFFFF'}).plot(render=False)
+                nodes).edges(edges_r).addStyle(bg={'color': '#FFFFFF'}).encode_point_icon('nodeLabel', shape="circle", as_text=True, categorical_mapping={
+                'Publisher': 'PU', 'Proposition': 'PR','Keyword':'K','JournalReference':'JR','Hypothesis':'H','Funding':'F','Construct':'C','Author':'AU',
+                'Affiliation':'AF', 'Moderator': 'MV', 'IndependentVariable': 'IV', 'Mediator': 'M', 'DependentVariable': 'DV'}, default_mapping="").plot(render=False)
             query = urlsplit(shareable_and_embeddable_url).query
             params = parse_qs(query)
             dataset_value = params['dataset']
@@ -227,11 +245,13 @@ async def queryGraphistry(node1: str, keyword1: Optional[str] = "null", node2: O
                 df = pd.DataFrame([r.data()
                                   for r in result], columns=result.keys())
                 edges_r = pd.DataFrame(columns=['n1', 'n2'])
-            nodes = graphistry.bind(
+            if df is not None:
+                nodes = graphistry.bind(
                 source="n1", destination="n2", node="id").nodes(df).edges(edges_r)
-            if nodes is not None:
-                viz = nodes.addStyle(bg={'color': '#FFFFFF'})
-                shareable_and_embeddable_url = viz.plot(render=False)
+                viz = nodes.addStyle(bg={'color': '#FFFFFF'}) #.layout_settings(locked_r=True, play=0)
+                shareable_and_embeddable_url = viz.encode_point_icon('nodeLabel', shape="circle", as_text=True, categorical_mapping={
+                'Publisher': 'PU', 'Proposition': 'PR','Keyword':'K','JournalReference':'JR','Hypothesis':'H','Funding':'F','Construct':'C','Author':'AU',
+                'Affiliation':'AF', 'Moderator': 'MV', 'IndependentVariable': 'IV', 'Mediator': 'M', 'DependentVariable': 'DV'}, default_mapping="").layout_igraph(layout='sugiyama').settings(url_params={'play': 0}).plot(render=False)
                 query = urlsplit(shareable_and_embeddable_url).query
                 params = parse_qs(query)
                 dataset_value = params['dataset']
@@ -276,8 +296,8 @@ WHERE '2020'> ref.year<= '2023'
 RETURN `Journal Name`, Years, `No.Of Papers`
 """
 
-query3 = """MATCH (c:Construct)-[r:AS]->(cr:`Construct Role`)
-WITH c.ConstructRole as role, count(c) as count
+query3 = """MATCH (c:Construct)-[r:AS]->(cr:ConstructRole)
+WITH c.constructRole as role, count(c) as count
 MATCH (c2:Construct)
 WITH count, role, count(c2) as total
 RETURN role, count, toFloat(count) / toFloat(total) * 100 as percentage
@@ -311,14 +331,15 @@ async def get_allQueries():
         info = session.run(query1)
         res1 = info.data()
         response["query1"] = res1
-
+        print (response)
         info = session.run(query2)
         res2 = info.data()
         response["query2"] = res2
-
+        print (response)
         info = session.run(query3)
         res3 = info.data()
-        response["query2"] = res3
+        response["query3"] = res3
+        print (response)
     json_results = json.dumps(response)
     return json_results
 
@@ -426,4 +447,7 @@ async def get_saved_queries(user_id: str, limit: Optional[int] = 100, skip: Opti
               "skip": skip}
     with SessionLocal() as con:
         result = con.execute(query, params)
-        return [SavedQuery(**row) for row in result]
+        return_res= [dict(**row) for row in result]
+        if return_res is None:
+            return ("no records found")
+        return return_res
