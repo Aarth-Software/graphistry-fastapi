@@ -367,6 +367,7 @@ async def insert_query_history(user_id: Optional[str] , node1: str, keyword1: Op
 
 class SaveQuery(BaseModel):
     user_id: str
+    query_name: str
     selection_type: str
     node1: str
     keyword1: Optional[str] = None
@@ -381,12 +382,13 @@ class SaveQuery(BaseModel):
 def save_query(save_query: SaveQuery):
     with SessionLocal() as con:
         query = text("""
-            INSERT INTO ld_user_saved_queries (user_id, selection_type, node1, keyword1, node2, keyword2, node3, keyword3, dataset)
-            VALUES (:user_id, :selection_type, :node1, :keyword1, :node2, :keyword2, :node3, :keyword3, :dataset)
+            INSERT INTO ld_user_saved_queries (user_id, selection_type,query_name, node1, keyword1, node2, keyword2, node3, keyword3, dataset)
+            VALUES (:user_id, :selection_type,:query_name, :node1, :keyword1, :node2, :keyword2, :node3, :keyword3, :dataset)
         """)
         params = {
             "user_id": save_query.user_id,
             "selection_type": save_query.selection_type,
+            "query_name": save_query.query_name,
             "node1": save_query.node1,
             "keyword1": save_query.keyword1,
             "node2": save_query.node2,
