@@ -251,7 +251,7 @@ async def queryGraphistry(node1: str, keyword1: Optional[str] = "null", node2: O
                 viz = nodes.addStyle(bg={'color': '#FFFFFF'}) #.layout_settings(locked_r=True, play=0)
                 shareable_and_embeddable_url = viz.encode_point_icon('nodeLabel', shape="circle", as_text=True, categorical_mapping={
                 'Publisher': 'PU', 'Proposition': 'PR','Keyword':'K','JournalReference':'JR','Hypothesis':'H','Funding':'F','Construct':'C','Author':'AU',
-                'Affiliation':'AF', 'Moderator': 'MV', 'IndependentVariable': 'IV', 'Mediator': 'M', 'DependentVariable': 'DV'}, default_mapping="").layout_igraph(layout='sugiyama').settings(url_params={'play': 0}).plot(render=False)
+                'Affiliation':'AF', 'Moderator': 'MV', 'IndependentVariable': 'IV', 'Mediator': 'M', 'DependentVariable': 'DV'}, default_mapping="").plot(render=False)
                 query = urlsplit(shareable_and_embeddable_url).query
                 params = parse_qs(query)
                 dataset_value = params['dataset']
@@ -446,7 +446,9 @@ def delete_saved_query(DeleteQuery :DeleteQuery):
 @app.get("/userQueries/{user_id}")
 async def get_saved_queries(user_id: str, limit: Optional[int] = 100, skip: Optional[int] = 0):
     query = text("""
-        SELECT uuid, user_id, selection_type,query_name, node1, keyword1, node2, keyword2, node3, keyword3, dataset, save_time
+        SELECT uuid, user_id, selection_type,query_name, node1, keyword1, node2, keyword2, node3, keyword3, 
+         concat_ws(':', node1, keyword1, node2, keyword2, node3, keyword3) as selected_query,
+        dataset, save_time
         FROM ld_user_saved_queries
         WHERE user_id = :user_id
         ORDER BY save_time DESC
