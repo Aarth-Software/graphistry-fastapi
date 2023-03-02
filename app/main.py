@@ -446,7 +446,7 @@ def delete_saved_query(DeleteQuery :DeleteQuery):
 @app.get("/userQueries/{user_id}")
 async def get_saved_queries(user_id: str, limit: Optional[int] = 100, skip: Optional[int] = 0):
     query = text("""
-        SELECT uuid, user_id, selection_type, node1, keyword1, node2, keyword2, node3, keyword3, dataset, save_time
+        SELECT uuid, user_id, selection_type,query_name, node1, keyword1, node2, keyword2, node3, keyword3, dataset, save_time
         FROM ld_user_saved_queries
         WHERE user_id = :user_id
         ORDER BY save_time DESC
