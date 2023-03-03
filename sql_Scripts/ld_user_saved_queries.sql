@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS ld_user_saved_queries (
     user_id TEXT NOT NULL,
     query_name TEXT NOT NULL,
 	selection_type varchar(50) NOT NULL,
+    selection_code varchar(50) NOT NULL,
     node1 TEXT NOT NULL,
     keyword1 TEXT,
     node2 TEXT,

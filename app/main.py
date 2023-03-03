@@ -369,6 +369,7 @@ class SaveQuery(BaseModel):
     user_id: str
     query_name: str
     selection_type: str
+    selection_code: str
     node1: str
     keyword1: Optional[str] = None
     node2: Optional[str] = None
@@ -382,12 +383,13 @@ class SaveQuery(BaseModel):
 def save_query(save_query: SaveQuery):
     with SessionLocal() as con:
         query = text("""
-            INSERT INTO ld_user_saved_queries (user_id, selection_type,query_name, node1, keyword1, node2, keyword2, node3, keyword3, dataset)
-            VALUES (:user_id, :selection_type,:query_name, :node1, :keyword1, :node2, :keyword2, :node3, :keyword3, :dataset)
+            INSERT INTO ld_user_saved_queries (user_id, selection_type,selection_code,query_name, node1, keyword1, node2, keyword2, node3, keyword3, dataset)
+            VALUES (:user_id, :selection_type,:selection_code,:query_name, :node1, :keyword1, :node2, :keyword2, :node3, :keyword3, :dataset)
         """)
         params = {
             "user_id": save_query.user_id,
             "selection_type": save_query.selection_type,
+            "selection_code":save_query.selection_code,
             "query_name": save_query.query_name,
             "node1": save_query.node1,
             "keyword1": save_query.keyword1,
@@ -446,7 +448,7 @@ def delete_saved_query(DeleteQuery :DeleteQuery):
 @app.get("/userQueries/{user_id}")
 async def get_saved_queries(user_id: str, limit: Optional[int] = 100, skip: Optional[int] = 0):
     query = text("""
-        SELECT uuid, user_id, selection_type,query_name, node1, keyword1, node2, keyword2, node3, keyword3, 
+        SELECT uuid, user_id, selection_type,selection_code, query_name, node1, keyword1, node2, keyword2, node3, keyword3, 
          concat_ws(':', node1, keyword1, node2, keyword2, node3, keyword3) as selected_query,
         dataset, save_time
         FROM ld_user_saved_queries
