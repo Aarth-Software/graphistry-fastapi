@@ -466,3 +466,33 @@ async def get_saved_queries(user_id: str, limit: Optional[int] = 100, skip: Opti
         if return_res is None:
             return ("no records found")
         return return_res
+
+@app.get("/userKeywords/{user_id}")
+async def get_saved_queries(user_id: str, limit: Optional[int] = 100, skip: Optional[int] = 0):
+    query = text("""
+                SELECT uuid, user_id, keyword, node, save_time
+                FROM (
+                    SELECT uuid, user_id, node1 as node, keyword1 as keyword, save_time
+                    FROM ld_user_saved_queries
+                            WHERE user_id = :user_id
+                    UNION ALL
+                    SELECT uuid, user_id, node2 as node, keyword2 as keyword, save_time
+                    FROM ld_user_saved_queries
+                            WHERE user_id = :user_id
+                    UNION ALL
+                    SELECT uuid, user_id, node3 as node, keyword3 as keyword, save_time
+                    FROM ld_user_saved_queries
+                            WHERE user_id = :user_id
+                ) subquery
+                LIMIT :limit
+                OFFSET :skip
+            """)
+    params = {"user_id": user_id,
+              "limit": limit,
+              "skip": skip}
+    with SessionLocal() as con:
+        result = con.execute(query, params)
+        return_res= [dict(**row) for row in result]
+        if return_res is None:
+            return ("no records found")
+        return return_res
