@@ -474,15 +474,15 @@ async def get_saved_queries(user_id: str, limit: Optional[int] = 100, skip: Opti
                 FROM (
                     SELECT uuid, user_id, node1 as node, keyword1 as keyword, save_time
                     FROM ld_user_saved_queries
-                            WHERE user_id = :user_id
+                            WHERE user_id = :user_id and keyword1 is not null
                     UNION ALL
                     SELECT uuid, user_id, node2 as node, keyword2 as keyword, save_time
                     FROM ld_user_saved_queries
-                            WHERE user_id = :user_id
+                            WHERE user_id = :user_id and keyword2 is not null 
                     UNION ALL
                     SELECT uuid, user_id, node3 as node, keyword3 as keyword, save_time
                     FROM ld_user_saved_queries
-                            WHERE user_id = :user_id
+                            WHERE user_id = :user_id and keyword3 is not null 
                 ) subquery
                 LIMIT :limit
                 OFFSET :skip
