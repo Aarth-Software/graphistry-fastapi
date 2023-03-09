@@ -158,7 +158,7 @@ async def queryGraphistry(node1: str, keyword1: Optional[str] = "null", node2: O
             # g = graphistry.edges(edges_r, source='n1', destination='n2')
             # g = g.nodes(nodes_df, 'id')
             # g = g.layout_igraph(layout='sugiyama')
-            # shareable_and_embeddable_url = g.plot(render=False)
+            # shareable_and_embeddable_url = g.settings(url_params={'play': 0}).plot(render=False)
  
             shareable_and_embeddable_url = graphistry.bind(source="n1", destination="n2", node="id").nodes(nodes_df).edges(edges_r).encode_point_icon('constructRole', shape="circle", as_text=True, categorical_mapping={
                 'Moderator': 'MV', 'IndependentVariable': 'IV', 'Mediator': 'M', 'DependentVariable': 'DV'}, default_mapping="").addStyle(bg={'color': '#FFFFFF'}).plot(render=False)
@@ -493,6 +493,16 @@ async def get_saved_queries(user_id: str, limit: Optional[int] = 100, skip: Opti
     with SessionLocal() as con:
         result = con.execute(query, params)
         return_res= [dict(**row) for row in result]
+        if return_res is None:
+            return ("no records found")
+        return return_res
+
+@app.get("/defaultGraph")
+async def get_default_graph():
+        query = text(""" select utility_value from ld_utility_tab where utility_type ='DEFAULT_GRAPH' """)
+        with SessionLocal() as con:
+            result = con.execute(query)
+            return_res= result.scalar()
         if return_res is None:
             return ("no records found")
         return return_res

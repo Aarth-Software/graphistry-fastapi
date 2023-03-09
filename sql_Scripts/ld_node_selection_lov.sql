@@ -1,4 +1,4 @@
-CREATE or replace TABLE public.ld_node_selection_lov
+CREATE TABLE IF NOT EXISTS public.ld_node_selection_lov
 (id integer,
     selection_type varchar(50),
     node_1 json,
